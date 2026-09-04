@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jankipuram Flood Nowcasting System | Smart Lucknow AI</title>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- MapLibre GL CSS & JS -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --panel-bg: rgba(15, 23, 42, 0.82);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --accent-blue: #0ea5e9;
+      --accent-cyan: #06b6d4;
+      --alert-red: #ef4444;
+      --alert-amber: #f59e0b;
+      --alert-green: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Layout */
+    #app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      background: #0b111e;
+    }
+
+    /* Glassmorphic Floating Sidebar */
+    .sidebar {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 410px;
+      max-height: calc(100vh - 40px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      z-index: 100;
+      padding: 24px;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      color: var(--accent-blue);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Live Telemetry Pill Bar */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .telemetry-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .telemetry-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Storm Simulator Panel */
+    .section-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .slider-header span:last-child {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: #1e293b;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-cyan);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    /* Hotspot Pill Selectors */
+    .hotspot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .hotspot-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .hotspot-item:hover {
+      background: rgba(14, 165, 233, 0.1);
+      border-color: var(--accent-blue);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-red { background: var(--alert-red); box-shadow: 0 0 8px var(--alert-red); }
+    .dot-amber { background: var(--alert-amber); box-shadow: 0 0 8px var(--alert-amber); }
+    .dot-green { background: var(--alert-green); box-shadow: 0 0 8px var(--alert-green); }
+
+    /* Top Right Floating Status Overlay */
+    .top-right-overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .alert-banner {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      border-left: 4px solid var(--alert-red);
+      border-radius: 12px;
+      padding: 14px 18px;
+      max-width: 380px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--panel-border);
+    }
+
+    .alert-headline {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f87171;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .alert-body {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    /* Map Legend */
+    .map-legend {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 11px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-bar {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    /* Route overlay badge */
+    .route-badge {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--alert-green);
+      color: #6ee7b7;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- MapLibre Container -->
+    <div id="map"></div>
+
+    <!-- Left Control & Intelligence Sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="header-badge">
+          <i data-lucide="activity" style="width:12px;height:12px;"></i> SIH 2026 • AI Urban Floods
+        </div>
+        <h1>Jankipuram Nowcast</h1>
+        <p class="subtitle">Multi-Agent Hydrodynamic Storm Inundation & Routing System • Lucknow, UP</p>
+      </div>
+
+      <!-- Telemetry Grid -->
+      <div class="telemetry-grid">
+        <div class="telemetry-card">
+          <span class="telemetry-label">SYSTEM STATUS</span>
+          <span id="stat-status" class="telemetry-value" style="color: #34d399; font-size:14px;">READY</span>
+        </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label">INFERENCE LATENCY</span>
+          <span id="stat-latency" class="telemetry-value">4.8 ms</span>
+        </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label">MAX FLOOD DEPTH</span>
+          <span id="stat-max-depth" class="telemetry-value">0.18 m</span>
+        </div>
+        <div class="telemetry-card">
+          <span class="telemetry-label">CLOSED ROADS</span>
+          <span id="stat-closed" class="telemetry-value" style="color: #f87171;">0 Segments</span>
+        </div>
+      </div>
+
+      <!-- Storm Dynamics Simulator -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="cloud-rain" style="width:16px;height:16px;color:var(--accent-cyan);"></i> Live Storm Simulator
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>Rainfall Intensity</span>
+            <span id="rain-val">85 mm/hr</span>
+          </div>
+          <input type="range" id="rain-slider" min="15" max="160" value="85" step="5">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-header">
+            <span>Storm Duration</span>
+            <span id="duration-val">1.5 hrs</span>
+          </div>
+          <input type="range" id="duration-slider" min="0.5" max="5.0" value="1.5" step="0.5">
+        </div>
+
+        <button id="btn-nowcast" class="btn-primary">
+          <i data-lucide="zap" style="width:16px;height:16px;"></i> Run ML Flood Nowcast
+        </button>
+      </div>
+
+      <!-- Hotspots Panel -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="map-pin" style="width:16px;height:16px;color:#f59e0b;"></i> Monitored Hotspots
+        </div>
+        <div class="hotspot-list">
+          <div class="hotspot-item" onclick="flyToLoc(26.9092, 80.9415, 'Engineering College Chauraha')">
+            <span>Engineering College Chauraha</span>
+            <span id="dot-eng" class="status-dot dot-amber"></span>
+          </div>
+          <div class="hotspot-item" onclick="flyToLoc(26.9210, 80.9380, 'Sector F Drain Basin')">
+            <span>Sector F Drain Basin</span>
+            <span id="dot-secf" class="status-dot dot-red"></span>
+          </div>
+          <div class="hotspot-item" onclick="flyToLoc(26.9360, 80.9520, 'Jankipuram Ext Underpass')">
+            <span>Jankipuram Ext Underpass</span>
+            <span id="dot-ext" class="status-dot dot-red"></span>
+          </div>
+          <div class="hotspot-item" onclick="flyToLoc(26.9285, 80.9590, 'Sector G Kursi Road')">
+            <span>Sector G / Kursi Road</span>
+            <span id="dot-kursi" class="status-dot dot-green"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safe Route Planner -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="navigation" style="width:16px;height:16px;color:#10b981;"></i> Flood-Safe Evacuation Router
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Calculates optimal dry path routing around inundated intersections.</p>
+        <button id="btn-route" class="btn-secondary" onclick="triggerSafeRoute()">
+          <i data-lucide="corner-up-right" style="width:14px;height:14px;"></i> Route: Chauraha ➔ Underpass
+        </button>
+        <div id="route-result" style="margin-top:8px;font-size:11px;color:#94a3b8;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Top Right Alerts Drawer -->
+    <div class="top-right-overlay">
+      <div id="alert-box" class="alert-banner">
+        <div class="alert-headline">
+          <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i>
+          <span id="alert-title">CRITICAL FLOOD WARNING</span>
+        </div>
+        <div id="alert-desc" class="alert-body">
+          Submergence detected at Sector F Drain and Extension Underpass. Mobile de-watering pumps recommended.
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Legend -->
+    <div class="map-legend">
+      <span style="font-weight:600;color:#cbd5e1;margin-bottom:2px;">INUNDATION SEVERITY</span>
+      <div class="legend-item">
+        <div class="legend-bar" style="background:#ef4444;"></div>
+        <span>High Risk / Closed (> 0.30m)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-bar" style="background:#f59e0b;"></div>
+        <span>Moderate Caution (0.12m - 0.30m)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-bar" style="background:#10b981;"></div>
+        <span>Safe / Clear (< 0.12m)</span>
+      </div>
+      <div class="legend-item" style="margin-top:4px;">
+        <div class="legend-bar" style="background:#00e5ff; height:3px; border-style:dashed;"></div>
+        <span>Safe Evacuation Route</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // MapLibre GL Initialization with OpenStreetMap (Full street level zoom 0-19, No API keys, No missing tiles)
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'osm-dark': {
+            type: 'raster',
+            tiles: [
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '© OpenStreetMap contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'osm-dark-layer',
+            type: 'raster',
+            source: 'osm-dark',
+            paint: {
+              'raster-brightness-max': 0.68,
+              'raster-brightness-min': 0.08,
+              'raster-contrast': 0.25,
+              'raster-saturation': -0.85
+            }
+          }
+        ]
+      },
+      center: [80.9420, 26.9240], // Jankipuram, Lucknow
+      zoom: 13.5,
+      pitch: 45,
+      bearing: -15,
+      antialias: true
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    // State Variables
+    let currentFloodGeojson = null;
+
+    // UI Slider Listeners
+    const rainSlider = document.getElementById('rain-slider');
+    const rainVal = document.getElementById('rain-val');
+    const durationSlider = document.getElementById('duration-slider');
+    const durationVal = document.getElementById('duration-val');
+
+    rainSlider.addEventListener('input', (e) => {
+      rainVal.textContent = `${e.target.value} mm/hr`;
+    });
+
+    durationSlider.addEventListener('input', (e) => {
+      durationVal.textContent = `${e.target.value} hrs`;
+    });
+
+    document.getElementById('btn-nowcast').addEventListener('click', () => {
+      runNowcast(parseFloat(rainSlider.value), parseFloat(durationSlider.value));
+    });
+
+    // Map Load Hook
+    map.on('load', () => {
+      // 1. Add Flood Hazard GeoJSON Source
+      map.addSource('flood-nowcast', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: []
+        }
+      });
+
+      // 2. Add Road Inundation Line Layer
+      map.addLayer({
+        id: 'flood-lines',
+        type: 'line',
+        source: 'flood-nowcast',
+        filter: ['==', '$type', 'LineString'],
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            12, 3,
+            16, 7
+          ],
+          'line-opacity': 0.85
+        }
+      });
+
+      // 3. Add Manhole Surcharge Nodes
+      map.addLayer({
+        id: 'flood-nodes',
+        type: 'circle',
+        source: 'flood-nowcast',
+        filter: ['==', '$type', 'Point'],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            12, 5,
+            16, 12
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff'
+        }
+      });
+
+      // 4. Safe Route Layer
+      map.addSource('safe-route', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: []
+        }
+      });
+
+      map.addLayer({
+        id: 'safe-route-line',
+        type: 'line',
+        source: 'safe-route',
+        paint: {
+          'line-color': '#00e5ff',
+          'line-width': 6,
+          'line-opacity': 0.95,
+          'line-dasharray': [2, 1]
+        }
+      });
+
+      // Node Click Tooltip
+      map.on('click', 'flood-nodes', (e) => {
+        const props = e.features[0].properties;
+        const coords = e.features[0].geometry.coordinates.slice();
+        
+        new maplibregl.Popup()
+          .setLngLat(coords)
+          .setHTML(`
+            <div style="color:#0f172a; font-family:'Inter',sans-serif; padding:4px;">
+              <h4 style="font-weight:700; margin-bottom:4px;">${props.name || props.node_id}</h4>
+              <p style="font-size:12px;"><strong>Flood Depth:</strong> ${props.flood_depth_m} m</p>
+              <p style="font-size:12px;"><strong>Surcharge:</strong> ${props.surcharge_m3} m³</p>
+              <p style="font-size:12px;"><strong>Status:</strong> ${props.inundation_status}</p>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      // Trigger initial nowcast
+      runNowcast(85.0, 1.5);
+    });
+
+    // Run Nowcast API call
+    async function runNowcast(rain, duration) {
+      try {
+        const btn = document.getElementById('btn-nowcast');
+        btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" style="width:16px;height:16px;"></i> Simulating...`;
+        lucide.createIcons();
+
+        const res = await fetch('/predict_flooding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rain_intensity_mm_hr: rain,
+            duration_hrs: duration,
+            amc_level: 2
+          })
+        });
+
+        const data = await res.json();
+        btn.innerHTML = `<i data-lucide="zap" style="width:16px;height:16px;"></i> Run ML Flood Nowcast`;
+        lucide.createIcons();
+
+        updateDashboard(data);
+      } catch (err) {
+        console.error("API error, fetching latest flood_map geojson fallback:", err);
+        fetchFloodMapGeoJSON();
+      }
+    }
+
+    async function fetchFloodMapGeoJSON() {
+      try {
+        const res = await fetch('/flood_map');
+        const geojson = await res.json();
+        if (map.getSource('flood-nowcast')) {
+          map.getSource('flood-nowcast').setData(geojson);
+        }
+      } catch (e) {
+        console.warn("Flood map fetch error:", e);
+      }
+    }
+
+    function updateDashboard(data) {
+      if (!data) return;
+
+      // Update telemetry
+      document.getElementById('stat-status').textContent = data.system_status || "NORMAL";
+      document.getElementById('stat-status').style.color = (data.system_status && data.system_status.includes("EMERGENCY")) ? "#ef4444" : "#34d399";
+      document.getElementById('stat-latency').textContent = `${data.total_latency_ms || 4.2} ms`;
+      
+      if (data.metrics) {
+        document.getElementById('stat-max-depth').textContent = `${data.metrics.max_predicted_flood_depth_m} m`;
+      }
+      if (data.road_status) {
+        document.getElementById('stat-closed').textContent = `${data.road_status.closed_segments} Segments`;
+      }
+
+      // Update alerts
+      if (data.alerts && data.alerts.length > 0) {
+        const alert = data.alerts[0];
+        document.getElementById('alert-title').textContent = alert.headline;
+        document.getElementById('alert-desc').textContent = alert.description;
+      }
+
+      // Load updated GeoJSON onto MapLibre
+      fetchFloodMapGeoJSON();
+    }
+
+    // Dynamic Evacuation Route
+    async function triggerSafeRoute() {
+      try {
+        const res = await fetch('/safe_route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            origin_lat: 26.9092,
+            origin_lon: 80.9415,
+            dest_lat: 26.9360,
+            dest_lon: 80.9520
+          })
+        });
+
+        const routeData = await res.json();
+        if (routeData.status === "SUCCESS" && routeData.route) {
+          map.getSource('safe-route').setData(routeData.route);
+          
+          const info = routeData.route.properties;
+          const box = document.getElementById('route-result');
+          box.style.display = 'block';
+          box.innerHTML = `
+            <div class="route-badge">
+              ✓ Optimal Path: ${info.total_distance_km} km (${info.estimated_travel_time_min} mins) • Status: ${info.route_status}
+            </div>
+          `;
+          
+          // Fit map bounds to route
+          const coords = routeData.route.geometry.coordinates;
+          const bounds = coords.reduce((b, coord) => b.extend(coord), new maplibregl.LngLatBounds(coords[0], coords[0]));
+          map.fitBounds(bounds, { padding: 80 });
+        }
+      } catch (err) {
+        console.error("Safe route calculation error:", err);
+      }
+    }
+
+    function flyToLoc(lat, lon, name) {
+      map.flyTo({
+        center: [lon, lat],
+        zoom: 15.5,
+        pitch: 60,
+        speed: 1.2
+      });
+    }
+  </script>
+</body>
+</html>

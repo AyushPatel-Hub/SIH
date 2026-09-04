@@ -1,0 +1,23 @@
+{
+  "training_samples": 5053000,
+  "features": [
+    "ground_elevation_m",
+    "manhole_depth_m",
+    "catchment_area_m2",
+    "imperviousness",
+    "conduit_avg_slope",
+    "conduit_avg_diameter_m",
+    "pipe_discharge_capacity_m3_s",
+    "amc_level",
+    "storm_duration_hrs",
+    "rain_intensity_mm_hr",
+    "is_hotspot"
+  ],
+  "metrics": {
+    "regression_r2": 0.8709,
+    "regression_rmse_m": 0.1105,
+    "classification_accuracy": 0.8955
+  },
+  "timestamp": "2026-09-04T21:45:19Z",
+  "model_type": "GradientBoostingRegressor + RandomForestClassifier Surrogate"
+}

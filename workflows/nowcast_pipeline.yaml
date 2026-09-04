@@ -1,0 +1,105 @@
+# Urban Flood Nowcasting Multi-Agent Workflow Specification
+# Jankipuram, Lucknow, Uttar Pradesh, India
+# Compatible with Antigravity Agent Orchestration Engine
+
+version: "2.0"
+name: "jankipuram_urban_flood_nowcasting_pipeline"
+description: "High-cadence 5-minute automated urban flood nowcasting and emergency routing pipeline."
+
+metadata:
+  target_region: "Jankipuram, Lucknow, UP"
+  bounding_box:
+    north: 26.9480
+    south: 26.8920
+    east: 80.9680
+    west: 80.9150
+  cadence: "*/5 * * * *"  # Trigger every 5 minutes
+  sla_target_ms: 500
+
+agents:
+  - id: "data_ingestion_agent"
+    name: "Data Ingestion Agent"
+    module: "agents.data_agent"
+    class: "DataIngestionAgent"
+    description: "Ingests local map.osm/OSMNx graphs, DEM elevation baselines, and Doppler radar grids."
+
+  - id: "ml_inference_agent"
+    name: "ML Inference Agent"
+    module: "agents.inference_agent"
+    class: "FloodInferenceAgent"
+    description: "Sub-second surrogate ML model predicting node overflow surcharging and flood depth."
+
+  - id: "alert_routing_agent"
+    name: "Alert and Routing Agent"
+    module: "agents.alert_agent"
+    class: "AlertAndRoutingAgent"
+    description: "Evaluates impassable roads, generates PostGIS/GeoJSON layers, and plans safe routes."
+
+triggers:
+  - type: "cron"
+    schedule: "*/5 * * * *"
+  - type: "event"
+    event_name: "high_intensity_radar_detection"
+    condition: "payload.rain_intensity_mm_hr >= 40.0"
+
+stages:
+  - stage: "stage_1_data_ingestion"
+    name: "Radar & Drainage Graph Ingestion"
+    agent: "data_ingestion_agent"
+    timeout_sec: 10
+    retry_policy:
+      max_retries: 2
+      backoff_sec: 1
+    inputs:
+      local_osm_path: "data/map.osm"
+      radar_source: "doppler_sim"
+      default_rain_intensity_mm_hr: 65.0
+    outputs:
+      - "drainage_network"
+      - "live_radar_grid"
+
+  - stage: "stage_2_ml_inference"
+    name: "Surrogate Hydraulic Model Inference"
+    agent: "ml_inference_agent"
+    depends_on: ["stage_1_data_ingestion"]
+    timeout_sec: 2
+    inputs:
+      radar_grid: "${stage_1_data_ingestion.outputs.live_radar_grid}"
+      duration_hrs: 1.0
+      amc_level: 2
+    outputs:
+      - "node_predictions"
+      - "system_status"
+      - "max_predicted_flood_depth_m"
+
+  - stage: "stage_3_alert_and_routing"
+    name: "Spatial Hazard Routing & Alert Broadcast"
+    agent: "alert_routing_agent"
+    depends_on: ["stage_2_ml_inference"]
+    timeout_sec: 3
+    inputs:
+      node_predictions: "${stage_2_ml_inference.outputs.node_predictions}"
+    outputs:
+      - "flood_hazard_geojson"
+      - "public_bulletins"
+      - "road_closure_matrix"
+
+alerts_and_dispatch:
+  thresholds:
+    critical_flood_depth_m: 0.30
+    warning_flood_depth_m: 0.12
+  channels:
+    - type: "webhook"
+      endpoint: "http://localhost:8000/internal/dispatch_alert"
+      enabled: true
+    - type: "geojson_export"
+      path: "data/flood_hazard_nowcast.geojson"
+      enabled: true
+
+telemetry:
+  metrics:
+    - "total_latency_ms"
+    - "max_predicted_flood_depth_m"
+    - "closed_segments_count"
+    - "high_risk_nodes_count"
+  export_to: "logs/pipeline_telemetry.json"
