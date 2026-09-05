@@ -34,6 +34,11 @@ def main():
         help="Run an automated nowcast cycle."
     )
     parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Fetch live rainfall from Open-Meteo, feed to database, and run automated nowcast cycle."
+    )
+    parser.add_argument(
         "--rain",
         type=float,
         default=85.0,
@@ -91,6 +96,14 @@ def main():
         logger.info(f"Nowcast Cycle Complete! Total Latency: {result['total_latency_ms']} ms")
         logger.info(f"System Status: {result['system_status']}")
         logger.info(f"Metrics: {result['metrics']}")
+        logger.info(f"Closed Road Segments: {result['road_status']['closed_segments']}")
+    if args.live:
+        logger.info("=== RUNNING AUTOMATED LIVE WEATHER INGESTION CYCLE ===")
+        result = coordinator.run_live_auto_cycle()
+        logger.info(f"Live Weather: {result['live_weather']['rain_rate_mm_hr']} mm/hr ({result['live_weather']['weather_desc']})")
+        logger.info(f"DB Ingest ID: {result['rainfall_reading_id']} | Nowcast Run ID: {result['nowcast_run_db_id']}")
+        logger.info(f"Nowcast Cycle Complete! Total Latency: {result['total_latency_ms']} ms")
+        logger.info(f"System Status: {result['system_status']}")
         logger.info(f"Closed Road Segments: {result['road_status']['closed_segments']}")
         for alert in result['alerts']:
             logger.info(f"Alert [{alert['severity']}]: {alert['headline']}")
