@@ -9,6 +9,10 @@ export default function TelemetryStats({
   latencyMs,
   systemStatus,
   sourceName,
+  weatherDesc,
+  temperatureC,
+  onFetchLiveWeather,
+  isSyncing,
 }) {
   const isDepthHazard = maxDepth > 0.30;
   const isModerateHazard = maxDepth > 0.12 && maxDepth <= 0.30;
@@ -16,10 +20,33 @@ export default function TelemetryStats({
   return (
     <div className="telemetry-strip">
       {/* 1. Rainfall Telemetry */}
-      <div className="telemetry-card">
+      <div className="telemetry-card" style={{ position: 'relative' }}>
         <div className="telemetry-label">
           <span>Live Precipitation Feed</span>
-          <CloudRain size={14} color="#38bdf8" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {onFetchLiveWeather && (
+              <button
+                onClick={onFetchLiveWeather}
+                disabled={isSyncing}
+                title="Fetch latest live weather"
+                style={{
+                  background: 'rgba(56, 189, 248, 0.12)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#38bdf8',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  fontSize: '10px',
+                  cursor: isSyncing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+              >
+                <span>{isSyncing ? 'Fetching...' : 'Fetch Live'}</span>
+              </button>
+            )}
+            <CloudRain size={14} color="#38bdf8" />
+          </div>
         </div>
         <div className="telemetry-value-row">
           <span className="telemetry-val" style={{ color: '#38bdf8' }}>
@@ -27,8 +54,11 @@ export default function TelemetryStats({
           </span>
           <span className="telemetry-sub">mm/hr</span>
         </div>
-        <div className="telemetry-sub" style={{ marginTop: '2px' }}>
-          {accumulated1h ? `1h Acc: ${Number(accumulated1h).toFixed(1)} mm` : sourceName || 'Live Station'}
+        <div className="telemetry-sub" style={{ marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
+          <span>{weatherDesc || 'Live Gauge'}</span>
+          {temperatureC !== undefined && (
+            <span style={{ color: '#9ca3af' }}>{Number(temperatureC).toFixed(1)}°C</span>
+          )}
         </div>
       </div>
 

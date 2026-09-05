@@ -64,7 +64,7 @@ class LiveWeatherService:
         params = {
             "latitude": JANKIPURAM_LAT,
             "longitude": JANKIPURAM_LON,
-            "current": "precipitation,rain,showers,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m",
+            "current": "temperature_2m,apparent_temperature,precipitation,rain,showers,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m",
             "hourly": "precipitation,rain",
             "forecast_days": 1,
             "timezone": "Asia/Kolkata",
@@ -108,6 +108,8 @@ class LiveWeatherService:
                 "rain_accumulated_1h_mm": round(rain_accumulated_1h, 2),
                 "weather_code": weather_code,
                 "weather_desc": weather_desc,
+                "temperature_c": current.get("temperature_2m", 28.5),
+                "feels_like_c": current.get("apparent_temperature", 31.0),
                 "station_name": "Jankipuram Meteorological Node (Lucknow, UP)",
                 "coordinates": {"lat": JANKIPURAM_LAT, "lon": JANKIPURAM_LON},
                 "humidity": current.get("relative_humidity_2m", 78),

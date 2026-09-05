@@ -1,22 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import TelemetryStats from './components/TelemetryStats';
+import LiveWeatherCard from './components/LiveWeatherCard';
 import MapView from './components/MapView';
 import EvacuationRouter from './components/EvacuationRouter';
 import RainfallHistoryChart from './components/RainfallHistoryChart';
 import HotspotsTable from './components/HotspotsTable';
 import AlertFeed from './components/AlertFeed';
 import ScenarioSimulator from './components/ScenarioSimulator';
-import { Activity, Navigation, MapPin, Bell, Sliders, Database } from 'lucide-react';
+import { Activity, Navigation, MapPin, Bell, Sliders, Database, CheckCircle2 } from 'lucide-react';
 
 export default function App() {
   // Operational Modes: 'live' (auto-ingest from DB) or 'sim' (what-if scenario)
   const [activeMode, setActiveMode] = useState('live');
   const [activeTab, setActiveTab] = useState('telemetry');
 
+  // Comprehensive Live Weather State
+  const [weatherData, setWeatherData] = useState({
+    rainRate: 0.1,
+    accumulated1h: 0.0,
+    temperatureC: 31.5,
+    feelsLikeC: 37.5,
+    humidity: 70,
+    surfacePressureHpa: 989.4,
+    windSpeedKmh: 8.3,
+    weatherDesc: 'Light Drizzle',
+    weatherCode: 51,
+    stationName: 'Jankipuram Meteorological Node (Lucknow, UP)',
+    source: 'Open-Meteo API (Jankipuram Station)',
+    timestamp: 'Live Ingest',
+    isLive: true,
+  });
+
   // Telemetry & State
   const [telemetry, setTelemetry] = useState({
-    rainRate: 0.0,
+    rainRate: 0.1,
     accumulated1h: 0.0,
     maxDepth: 0.0,
     closedRoads: 0,
@@ -34,6 +52,7 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isComputingRoute, setIsComputingRoute] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // 1. Initial Data Fetch & Polling
   const fetchLiveState = useCallback(async () => {
@@ -46,6 +65,30 @@ export default function App() {
         const nowcast = data.last_nowcast_state;
 
         if (reading) {
+          let raw = {};
+          if (reading.raw_payload) {
+            try {
+              raw = typeof reading.raw_payload === 'string' ? JSON.parse(reading.raw_payload) : reading.raw_payload;
+            } catch (e) {}
+          }
+
+          setWeatherData((prev) => ({
+            ...prev,
+            rainRate: reading.rain_rate_mm_hr || 0.0,
+            accumulated1h: reading.rain_accumulated_1h_mm || 0.0,
+            weatherDesc: reading.weather_desc || 'Clear Sky',
+            weatherCode: reading.weather_code || 0,
+            stationName: reading.station_name || 'Jankipuram Meteorological Node',
+            source: reading.source || 'Open-Meteo API',
+            timestamp: reading.timestamp || prev.timestamp,
+            temperatureC: raw.temperature_2m ?? raw.temperature_c ?? prev.temperatureC,
+            feelsLikeC: raw.apparent_temperature ?? raw.feels_like_c ?? prev.feelsLikeC,
+            humidity: raw.relative_humidity_2m ?? raw.humidity ?? prev.humidity,
+            surfacePressureHpa: raw.surface_pressure ?? raw.surface_pressure_hpa ?? prev.surfacePressureHpa,
+            windSpeedKmh: raw.wind_speed_10m ?? raw.wind_speed_kmh ?? prev.windSpeedKmh,
+            isLive: true,
+          }));
+
           setTelemetry((prev) => ({
             ...prev,
             rainRate: reading.rain_rate_mm_hr || 0.0,
@@ -104,16 +147,46 @@ export default function App() {
     return () => clearInterval(interval);
   }, [fetchLiveState]);
 
-  // 2. Force Sync Weather Now
-  const handleSyncLiveWeather = async () => {
+  // 2. Explicit Fetch Live Weather Now
+  const handleFetchLiveWeather = async () => {
     setIsSyncing(true);
     try {
       const res = await fetch('/api/rainfall/sync-now', { method: 'POST' });
       if (res.ok) {
+        const data = await res.json();
+        const liveW = data.weather || data.data?.live_weather;
+
+        if (liveW) {
+          setWeatherData({
+            rainRate: liveW.rain_rate_mm_hr ?? 0.0,
+            accumulated1h: liveW.rain_accumulated_1h_mm ?? 0.0,
+            temperatureC: liveW.temperature_c ?? 31.5,
+            feelsLikeC: liveW.feels_like_c ?? 37.5,
+            humidity: liveW.humidity ?? 70,
+            surfacePressureHpa: liveW.surface_pressure_hpa ?? 989.4,
+            windSpeedKmh: liveW.wind_speed_kmh ?? 8.3,
+            weatherDesc: liveW.weather_desc || 'Normal',
+            weatherCode: liveW.weather_code || 0,
+            stationName: liveW.station_name || 'Jankipuram Meteorological Node',
+            source: liveW.source || 'Open-Meteo API',
+            timestamp: liveW.timestamp || new Date().toLocaleTimeString(),
+            isLive: true,
+          });
+
+          setToastMessage(
+            `Live Weather Ingested: ${Number(liveW.rain_rate_mm_hr).toFixed(1)} mm/hr, ${liveW.temperature_c}°C (${liveW.weather_desc})`
+          );
+        } else {
+          setToastMessage('Real-time weather query successful and nowcast updated.');
+        }
+
         await fetchLiveState();
+        setTimeout(() => setToastMessage(null), 4500);
       }
     } catch (err) {
-      console.error('Sync failed:', err);
+      console.error('Fetch live weather failed:', err);
+      setToastMessage('Live weather fetch failed: Connection error.');
+      setTimeout(() => setToastMessage(null), 4500);
     } finally {
       setIsSyncing(false);
     }
@@ -192,11 +265,19 @@ export default function App() {
 
   return (
     <div className="eoc-app-container">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="eoc-toast-banner">
+          <CheckCircle2 size={16} color="#34d399" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* 1. Top EOC Header */}
       <Header
         activeMode={activeMode}
         setActiveMode={handleModeChange}
-        onSyncLiveWeather={handleSyncLiveWeather}
+        onSyncLiveWeather={handleFetchLiveWeather}
         isSyncing={isSyncing}
         systemStatus={telemetry.systemStatus}
       />
@@ -210,6 +291,10 @@ export default function App() {
         latencyMs={telemetry.latencyMs}
         systemStatus={telemetry.systemStatus}
         sourceName={telemetry.sourceName}
+        weatherDesc={weatherData.weatherDesc}
+        temperatureC={weatherData.temperatureC}
+        onFetchLiveWeather={handleFetchLiveWeather}
+        isSyncing={isSyncing}
       />
 
       {/* 3. Main Split Operational Workspace */}
@@ -261,6 +346,15 @@ export default function App() {
           <div className="panel-scroll-content">
             {activeTab === 'telemetry' && (
               <>
+                <LiveWeatherCard
+                  weather={weatherData}
+                  onFetchLiveWeather={handleFetchLiveWeather}
+                  isSyncing={isSyncing}
+                  onUseInSimulator={() => {
+                    setActiveMode('sim');
+                    setActiveTab('simulator');
+                  }}
+                />
                 <RainfallHistoryChart historyData={historyData} />
                 <AlertFeed alerts={alerts} />
               </>
@@ -288,6 +382,7 @@ export default function App() {
               <ScenarioSimulator
                 onRunSimulation={handleRunSimulation}
                 isSimulating={isSimulating}
+                liveRainRate={weatherData.rainRate}
               />
             )}
           </div>

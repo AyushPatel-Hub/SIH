@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Sliders, Zap, AlertTriangle } from 'lucide-react';
 
-export default function ScenarioSimulator({ onRunSimulation, isSimulating }) {
-  const [rainRate, setRainRate] = useState(90);
+export default function ScenarioSimulator({ onRunSimulation, isSimulating, liveRainRate }) {
+  const [rainRate, setRainRate] = useState(liveRainRate ? Math.max(10, Math.round(liveRainRate)) : 90);
   const [duration, setDuration] = useState(1.5);
   const [amc, setAmc] = useState(2);
 
@@ -26,24 +26,32 @@ export default function ScenarioSimulator({ onRunSimulation, isSimulating }) {
       </p>
 
       {/* Preset Buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '14px' }}>
         <button
           className="btn-secondary"
-          style={{ fontSize: '11px', padding: '6px 4px', justifyContent: 'center' }}
+          style={{ fontSize: '10px', padding: '6px 2px', justifyContent: 'center', borderColor: '#38bdf8', color: '#38bdf8' }}
+          onClick={() => { setRainRate(Math.max(5, liveRainRate ?? 0.1)); setDuration(1.0); }}
+          title="Use current real-time live rain intensity"
+        >
+          Live ({Number(liveRainRate ?? 0.1).toFixed(1)}mm/h)
+        </button>
+        <button
+          className="btn-secondary"
+          style={{ fontSize: '10px', padding: '6px 2px', justifyContent: 'center' }}
           onClick={() => { setRainRate(35); setDuration(1.0); }}
         >
           Moderate (35mm/h)
         </button>
         <button
           className="btn-secondary"
-          style={{ fontSize: '11px', padding: '6px 4px', justifyContent: 'center' }}
+          style={{ fontSize: '10px', padding: '6px 2px', justifyContent: 'center' }}
           onClick={() => { setRainRate(85); setDuration(1.5); }}
         >
           Intense (85mm/h)
         </button>
         <button
           className="btn-secondary"
-          style={{ fontSize: '11px', padding: '6px 4px', justifyContent: 'center', borderColor: '#ef4444', color: '#f87171' }}
+          style={{ fontSize: '10px', padding: '6px 2px', justifyContent: 'center', borderColor: '#ef4444', color: '#f87171' }}
           onClick={() => { setRainRate(135); setDuration(2.0); }}
         >
           Extreme (135mm/h)

@@ -60,15 +60,20 @@ export default function Header({
           </button>
         </div>
 
-        {/* Sync Now Button */}
+        {/* Fetch Real-Time Weather Button */}
         <button
           className="btn-primary"
+          style={{
+            backgroundColor: '#0284c7',
+            borderColor: '#38bdf8',
+            boxShadow: '0 0 10px rgba(56, 189, 248, 0.25)',
+          }}
           onClick={onSyncLiveWeather}
           disabled={isSyncing}
-          title="Force immediate live weather query and database update"
+          title="Fetch real-time live weather telemetry from Open-Meteo for Jankipuram and run flood nowcast"
         >
           <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
-          {isSyncing ? 'Syncing...' : 'Sync Weather'}
+          <span>{isSyncing ? 'Fetching Live...' : 'Fetch Live Weather'}</span>
         </button>
 
         {/* Status Pill */}

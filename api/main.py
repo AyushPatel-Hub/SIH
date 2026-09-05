@@ -177,12 +177,71 @@ def get_live_rainfall() -> Dict[str, Any]:
         )
         latest_reading = coordinator.db.get_latest_rainfall()
 
+    # Parse raw payload to provide enriched weather parameters
+    weather_info = {}
+    if latest_reading and latest_reading.get("raw_payload"):
+        try:
+            raw = json.loads(latest_reading["raw_payload"]) if isinstance(latest_reading["raw_payload"], str) else latest_reading["raw_payload"]
+            weather_info = {
+                "temperature_c": raw.get("temperature_2m", 30.0),
+                "feels_like_c": raw.get("apparent_temperature", 33.0),
+                "humidity": raw.get("relative_humidity_2m", 75),
+                "surface_pressure_hpa": raw.get("surface_pressure", 1005.0),
+                "wind_speed_kmh": raw.get("wind_speed_10m", 10.0),
+                "weather_desc": latest_reading.get("weather_desc", "Normal"),
+                "weather_code": latest_reading.get("weather_code", 0),
+                "rain_rate_mm_hr": latest_reading.get("rain_rate_mm_hr", 0.0),
+                "rain_accumulated_1h_mm": latest_reading.get("rain_accumulated_1h_mm", 0.0),
+                "station_name": latest_reading.get("station_name", "Jankipuram, Lucknow"),
+                "timestamp": latest_reading.get("timestamp"),
+            }
+        except Exception:
+            pass
+
     return {
         "latest_reading": latest_reading,
+        "weather_info": weather_info,
         "last_nowcast_state": latest_state.get("last_nowcast"),
         "last_run_timestamp": latest_state.get("last_run_timestamp"),
         "auto_ingest_active": latest_state["auto_ingest_active"],
     }
+
+
+@app.get("/api/weather/live")
+def get_live_weather() -> Dict[str, Any]:
+    """
+    Directly queries Open-Meteo API for real-time live meteorological telemetry
+    at Jankipuram, Lucknow (UP, India).
+    """
+    try:
+        telemetry = coordinator.weather_service.fetch_live_rainfall()
+        return {
+            "status": "success",
+            "weather": telemetry,
+            "timestamp": time.time(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Live weather query failed: {str(e)}")
+
+
+@app.post("/api/weather/fetch-live")
+def fetch_live_weather_and_sync() -> Dict[str, Any]:
+    """
+    Fetch real-time live weather data from Open-Meteo,
+    save to SQLite database, and execute immediate ML flood nowcast.
+    """
+    try:
+        res = coordinator.run_live_auto_cycle()
+        latest_state["last_nowcast"] = res
+        latest_state["last_run_timestamp"] = time.time()
+        return {
+            "status": "success",
+            "message": "Real-time live weather data fetched and nowcast refreshed.",
+            "weather": res.get("live_weather"),
+            "data": res,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Live weather fetch and sync failed: {str(e)}")
 
 
 @app.get("/api/rainfall/history")
@@ -205,6 +264,7 @@ def sync_live_weather_now() -> Dict[str, Any]:
         return {
             "status": "success",
             "message": "Live weather telemetry ingested into database and nowcast refreshed.",
+            "weather": res.get("live_weather"),
             "data": res,
         }
     except Exception as e:
