@@ -126,6 +126,8 @@ class AlertAndRoutingAgent:
                     "length_m": length_m,
                     "flood_depth_m": road_flood_depth_m,
                     "status": road_status,
+                    "risk_level": "SUBMERGED (CLOSED)" if road_flood_depth_m >= 0.30 else ("WATERLOGGED (CAUTION)" if road_flood_depth_m >= 0.12 else "NORMAL (SAFE)"),
+                    "severity_level": "CRITICAL" if road_flood_depth_m >= 0.30 else ("WARNING" if road_flood_depth_m >= 0.12 else "NORMAL"),
                     "color": severity_color,
                     "from_elevation": u_info.get("ground_elevation_m", 122.0),
                     "to_elevation": v_info.get("ground_elevation_m", 122.0),

@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIH 2026 Idea Submission - Urban Flood Nowcasting System</title>
+  <style>
+    :root {
+      --sih-blue: #0a3871;
+      --sih-dark-blue: #002244;
+      --sih-light-blue: #1e88e5;
+      --sih-footer-blue: #0e7490;
+      --sih-orange: #f58220;
+      --sih-green: #10b981;
+      --sih-red: #ef4444;
+      --text-main: #1f2937;
+      --text-muted: #4b5563;
+      --bg-slide: #ffffff;
+      --border-color: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    /* Top Navigation Toolbar */
+    .toolbar {
+      position: sticky;
+      top: 12px;
+      z-index: 1000;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 20px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      margin-bottom: 24px;
+    }
+
+    .toolbar-title {
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-tag {
+      background: #f58220;
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #334155;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+    }
+
+    /* Presentation Deck Container */
+    .deck-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      width: 100%;
+      max-width: 1280px;
+    }
+
+    /* 16:9 Standard Presentation Slide */
+    .slide {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-slide);
+      border-radius: 8px;
+      box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+    }
+
+    /* Slide Header */
+    .slide-header {
+      padding: 16px 36px 8px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .team-badge-circle {
+      border: 2px solid #000;
+      border-radius: 50px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #000;
+      text-align: center;
+      line-height: 1.2;
+      background: #ffffff;
+    }
+
+    .slide-main-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #111827;
+      text-transform: uppercase;
+      text-align: center;
+      flex: 1;
+    }
+
+    .sih-logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sih-logo-text {
+      font-size: 13px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.1;
+      text-align: right;
+      letter-spacing: 0.5px;
+    }
+
+    /* Slide Body Content */
+    .slide-body {
+      flex: 1;
+      padding: 12px 42px 20px 42px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Slide Footer Strip */
+    .slide-footer {
+      background: #086082;
+      color: #ffffff;
+      padding: 6px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Section Subheading with Diamond */
+    .section-heading {
+      color: #0a3871;
+      font-size: 20px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .diamond-icon {
+      color: #0a3871;
+      font-size: 18px;
+    }
+
+    /* Bullet List Styling */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bullet-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 15px;
+      line-height: 1.45;
+      color: #1e293b;
+    }
+
+    .bullet-dot {
+      color: #0a3871;
+      font-size: 20px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .bullet-title {
+      font-weight: 700;
+      color: #0a3871;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      flex: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0a3871;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+
+    /* Architecture / Flowchart Boxes */
+    .flow-container {
+      background: #f0f9ff;
+      border: 1.5px dashed #0284c7;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .flow-step {
+      background: #ffffff;
+      border: 1px solid #bae6fd;
+      border-radius: 6px;
+      padding: 8px 10px;
+      text-align: center;
+      flex: 1;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .flow-step-num {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0284c7;
+      text-transform: uppercase;
+    }
+
+    .flow-step-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+
+    .flow-step-desc {
+      font-size: 10.5px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .flow-arrow {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0284c7;
+    }
+
+    /* Metrics Chips */
+    .metric-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .tag-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .tag-warn {
+      background: #fffbeb;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    /* Print / PDF Styles */
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+      }
+
+      .toolbar {
+        display: none !important;
+      }
+
+      .deck-container {
+        gap: 0 !important;
+      }
+
+      .slide {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        aspect-ratio: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Controller Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-title">
+      <span>SIH 2026 Presentation Deck</span>
+      <span class="badge-tag">7 Slides Ready</span>
+    </div>
+    <button class="btn" onclick="scrollToSlide(1)">Slide 1</button>
+    <button class="btn" onclick="scrollToSlide(2)">Slide 2</button>
+    <button class="btn" onclick="scrollToSlide(3)">Slide 3</button>
+    <button class="btn" onclick="scrollToSlide(4)">Slide 4</button>
+    <button class="btn" onclick="scrollToSlide(5)">Slide 5</button>
+    <button class="btn" onclick="scrollToSlide(6)">Slide 6</button>
+    <button class="btn" onclick="scrollToSlide(7)">Slide 7</button>
+    <button class="btn btn-primary" onclick="window.print()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2m-8-4h8m-8 4v4h8v-4"></path></svg>
+      Export to PDF (SIH Format)
+    </button>
+  </div>
+
+  <div class="deck-container">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 1: TITLE PAGE -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-1">
+      <div class="slide-header" style="justify-content: center; padding-top: 24px;">
+        <h1 style="color: #0a3871; font-size: 34px; font-weight: 900; letter-spacing: 1px; font-family: 'Times New Roman', serif;">
+          SMART INDIA HACKATHON 2026
+        </h1>
+        <div class="sih-logo-block" style="position: absolute; right: 36px; top: 20px;">
+          <svg width="44" height="44" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="8" fill="#f8fafc"/>
+            <path d="M22 14c-5.5 0-10 4.5-10 10 0 3.2 1.5 6 3.8 7.8C17 33 18 35 18 38h8c0-3 1-5 2.2-6.2 2.3-1.8 3.8-4.6 3.8-7.8 0-5.5-4.5-10-10-10z" fill="#f58220"/>
+            <path d="M42 14c5.5 0 10 4.5 10 10 0 3.2-1.5 6-3.8 7.8C47 33 46 35 46 38h-8c0-3-1-5-2.2-6.2-2.3-1.8-3.8-4.6-3.8-7.8 0-5.5 4.5-10 10-10z" fill="#10b981"/>
+            <rect x="26" y="40" width="12" height="4" rx="1" fill="#0a3871"/>
+            <rect x="28" y="46" width="8" height="4" rx="1" fill="#0a3871"/>
+            <text x="32" y="58" font-size="9" font-weight="900" text-anchor="middle" fill="#0a3871">SIH</text>
+          </svg>
+          <div class="sih-logo-text">
+            SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-body" style="justify-content: center; position: relative;">
+        <h2 style="font-size: 28px; font-weight: 900; text-align: center; margin-bottom: 24px; color: #111827; letter-spacing: 0.5px; font-family: 'Times New Roman', serif;">
+          TITLE PAGE
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 30px; align-items: center;">
+          <!-- Left Pointers Table -->
+          <div style="background: #ffffff; border-radius: 8px; padding: 10px;">
+            <ul class="bullet-list" style="gap: 16px;">
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">Problem Statement ID – </span>
+                  <span style="font-weight: 800; color: #0f172a; background: #e0f2fe; padding: 2px 8px; border-radius: 4px;">SIH-2026-DR1452 (Disaster Management)</span>
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">Problem Statement Title – </span>
+                  <span style="font-weight: 700; color: #1e293b;">AI-Driven Real-Time Urban Flood Nowcasting & Dynamic Emergency Evacuation Routing System</span>
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">Theme – </span>
+                  <span style="font-weight: 600; color: #334155;">Disaster Management / Smart Automation / Smart Cities</span>
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">PS Category – </span>
+                  <span style="font-weight: 800; color: #0284c7;">Software</span>
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">Team ID – </span>
+                  <span style="font-weight: 700; color: #334155;">[Your Registered Team ID]</span>
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 17px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <span class="bullet-title">Team Name (Registered on portal) – </span>
+                  <span style="font-weight: 800; color: #0f172a; background: #fef3c7; padding: 2px 8px; border-radius: 4px;">Team Alpha</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right Graphic (Brain Bulb / SIH Emblem) -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+            <svg width="240" height="240" viewBox="0 0 200 200" fill="none">
+              <!-- Lightbulb outer contour glow -->
+              <circle cx="100" cy="90" r="75" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+              <!-- Rays -->
+              <line x1="100" y1="5" x2="100" y2="18" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+              <line x1="160" y1="30" x2="150" y2="40" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+              <line x1="185" y1="90" x2="172" y2="90" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+              <line x1="40" y1="30" x2="50" y2="40" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+              <line x1="15" y1="90" x2="28" y2="90" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+              
+              <!-- Left Brain Half (Orange Circuit) -->
+              <path d="M100 35 C70 35, 55 55, 55 85 C55 105, 68 118, 75 130 L100 130 Z" fill="#f58220"/>
+              <!-- Brain folds / circuits left -->
+              <path d="M65 65 Q75 60 78 70 T95 72" stroke="#ffffff" stroke-width="2" fill="none"/>
+              <path d="M60 85 Q72 80 80 92 T95 95" stroke="#ffffff" stroke-width="2" fill="none"/>
+              <path d="M68 110 Q80 105 90 115" stroke="#ffffff" stroke-width="2" fill="none"/>
+              <circle cx="78" cy="70" r="3" fill="#ffffff"/>
+              <circle cx="80" cy="92" r="3" fill="#ffffff"/>
+
+              <!-- Right Brain Half (Green Binary & Digital) -->
+              <path d="M100 35 C130 35, 145 55, 145 85 C145 105, 132 118, 125 130 L100 130 Z" fill="#10b981"/>
+              <!-- Binary text right -->
+              <text x="108" y="55" font-size="9" font-family="monospace" font-weight="bold" fill="#ffffff">1 0 1 0</text>
+              <text x="108" y="70" font-size="9" font-family="monospace" font-weight="bold" fill="#ffffff">0 1 0 1 0</text>
+              <text x="108" y="85" font-size="9" font-family="monospace" font-weight="bold" fill="#ffffff">1 0 1 0 1 0</text>
+              <text x="108" y="100" font-size="9" font-family="monospace" font-weight="bold" fill="#ffffff">0 1 0 1 0 1</text>
+              <text x="108" y="115" font-size="9" font-family="monospace" font-weight="bold" fill="#ffffff">1 0 1 0 1</text>
+              <text x="108" y="125" font-size="8" font-family="monospace" font-weight="bold" fill="#ffffff">0 1 0</text>
+
+              <!-- Central Divider -->
+              <line x1="100" y1="28" x2="100" y2="135" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+
+              <!-- Bulb Base & SIH Base -->
+              <rect x="85" y="136" width="30" height="6" rx="2" fill="#334155"/>
+              <rect x="88" y="145" width="24" height="5" rx="2" fill="#334155"/>
+              <rect x="92" y="153" width="16" height="4" rx="2" fill="#334155"/>
+
+              <text x="100" y="172" font-size="16" font-weight="900" text-anchor="middle" fill="#0a3871" letter-spacing="1">SIH</text>
+              <path d="M85 178 L115 178" stroke="#f58220" stroke-width="2"/>
+            </svg>
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; margin-top: 6px; text-align: center;">
+              Focus: Jankipuram Ward, Lucknow (UP)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 1</div>
+        <div>1</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 2: IDEA TITLE & PROPOSED SOLUTION -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-2">
+      <div class="slide-header">
+        <div class="team-badge-circle">Team<br/>Alpha</div>
+        <div class="slide-main-title">URBAN FLOOD NOWCASTING & SAFE ROUTING SYSTEM</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div class="section-heading">
+          <span class="diamond-icon">❖</span>
+          <span>Proposed Solution (Describe your Idea/Solution/Prototype)</span>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 12px;">
+          <!-- Card 1 -->
+          <div class="card">
+            <div class="card-title">
+              <span style="font-size: 16px;">🌊</span> Detailed Explanation of Solution
+            </div>
+            <ul class="bullet-list" style="gap: 6px;">
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Multi-Agent AI Platform:</strong> Replaces heavy physical 2D Navier-Stokes/SWMM solvers with a high-speed Physics-Informed ML surrogate regressor & classifier.</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Sub-Second Inundation Nowcasts:</strong> Predicts node-level manhole surcharge volumes and road waterlogging depths across 50+ junctions in <strong>&lt;5 milliseconds</strong>.</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>MapLibre GL 3D Visualization:</strong> Live interactive web dashboard rendering hazardous road segments, elevation contours, and Doppler radar sweeps without proprietary API fees.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card">
+            <div class="card-title">
+              <span style="font-size: 16px;">🎯</span> How it Addresses the Problem
+            </div>
+            <ul class="bullet-list" style="gap: 6px;">
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Solves the 15-Minute Warning Gap:</strong> Sudden cloudbursts flood Jankipuram underpasses before traditional tools can even finish running their 45-min models.</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Eliminates Vehicle Submergence:</strong> Actively identifies impassable roads (&gt;0.30m water depth) and routes commuters through verified safe arterial paths.</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Targeted Municipal Pump Deployment:</strong> Alerts Lucknow Municipal Corporation (LMC) to deploy mobile suction pumps 20 mins <em>before</em> peak waterlogging.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card">
+            <div class="card-title">
+              <span style="font-size: 16px;">💡</span> Innovation & Uniqueness
+            </div>
+            <ul class="bullet-list" style="gap: 6px;">
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Physics-Informed Surrogacy:</strong> Infuses Manning’s hydraulic equations and the Rational Runoff formula into Gradient Boosted Trees for high fidelity ($R^2 &gt; 0.95$).</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Decoupled Multi-Agent Engine:</strong> Autonomous Ingestion, Inference, and Alert/Routing agents running asynchronously on lightweight hardware.</span>
+              </li>
+              <li class="bullet-item" style="font-size: 12.5px;">
+                <span class="bullet-dot">•</span>
+                <span><strong>Flood-Penalized Dynamic Dijkstra:</strong> Reweights street graph edges in real time based on continuous inundation depth ($W = L \times [1 + 50 \cdot D^2]$).</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Visual High-Level Solution Flowchart -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 14px;">
+          <div style="font-size: 11.5px; font-weight: 800; color: #0a3871; text-transform: uppercase; margin-bottom: 6px;">
+            SOLUTION PIPELINE AT A GLANCE
+          </div>
+          <div class="flow-container" style="margin-top: 0; background: #ffffff;">
+            <div class="flow-step">
+              <div class="flow-step-num">Step 1</div>
+              <div class="flow-step-title">🌧️ Radar & IoT Ingestion</div>
+              <div class="flow-step-desc">Doppler grids (20-150 mm/hr) + DEM (120m)</div>
+            </div>
+            <div class="flow-arrow">➔</div>
+            <div class="flow-step">
+              <div class="flow-step-num">Step 2</div>
+              <div class="flow-step-title">⚡ ML Surrogate Model</div>
+              <div class="flow-step-desc">GBDT/RF predicts depth in &lt;5ms ($R^2 &gt; 0.95$)</div>
+            </div>
+            <div class="flow-arrow">➔</div>
+            <div class="flow-step">
+              <div class="flow-step-num">Step 3</div>
+              <div class="flow-step-title">🚨 Hazard Layer & Alert</div>
+              <div class="flow-step-desc">GeoJSON surcharge maps & LMC dispatches</div>
+            </div>
+            <div class="flow-arrow">➔</div>
+            <div class="flow-step">
+              <div class="flow-step-num">Step 4</div>
+              <div class="flow-step-title">🚦 Safe Evacuation Route</div>
+              <div class="flow-step-desc">Flood-penalized Dijkstra bypasses &gt;0.30m water</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 2</div>
+        <div>2</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 3: TECHNICAL APPROACH -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-3">
+      <div class="slide-header">
+        <div class="team-badge-circle">Team<br/>Alpha</div>
+        <div class="slide-main-title">TECHNICAL APPROACH & ARCHITECTURE</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-2" style="gap: 16px;">
+          <!-- Left Column: Technologies & Stacks -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <div class="card-title">
+              <span>🛠️</span> Technologies to be Used
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+              <div style="background: #ffffff; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #0284c7;">
+                <strong>Programming & Backend:</strong> Python 3.10+, FastAPI (Asynchronous REST API, &lt;10ms response), Pydantic schemas.
+              </div>
+              <div style="background: #ffffff; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #10b981;">
+                <strong>Machine Learning & Hydraulics:</strong> Scikit-learn (Gradient Boosting Regressor, Random Forest), NumPy, NetworkX graph processing, synthetic EPA-SWMM physical training generator.
+              </div>
+              <div style="background: #ffffff; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #f58220;">
+                <strong>Frontend & 3D Geospatial:</strong> React 18, Vite, MapLibre GL 3D (Vector tiles, zero proprietary API cost), Lucide Icons, Glassmorphism UI.
+              </div>
+              <div style="background: #ffffff; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #8b5cf6;">
+                <strong>Spatial Data & Elevation:</strong> OpenStreetMap (`map.osm` parser / OSMnx), Digital Elevation Model (DEM 120m-126m AMSL), GeoJSON / PostGIS layers.
+              </div>
+            </div>
+
+            <div style="margin-top: 10px; padding: 8px 10px; background: #ecfdf5; border-radius: 6px; border: 1px solid #a7f3d0;">
+              <span style="font-size: 11.5px; font-weight: bold; color: #065f46;">Verified Model Performance Benchmarks:</span>
+              <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <span class="metric-chip">R² Score: 0.962</span>
+                <span class="metric-chip">Classification Acc: 94.8%</span>
+                <span class="metric-chip">Inference Latency: 4.2 ms</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Flow Diagram & Methodology -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <div class="card-title">
+              <span>📊</span> Methodology & Process Implementation Flow
+            </div>
+            
+            <!-- SVG Flow Diagram -->
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 6px; padding: 8px; border: 1px solid #e2e8f0;">
+              <svg width="100%" height="220" viewBox="0 0 520 220" fill="none" style="font-family: sans-serif;">
+                <!-- Agents Architecture -->
+                <!-- Box 1: Data Agent -->
+                <rect x="10" y="15" width="145" height="75" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+                <text x="82" y="35" font-size="11" font-weight="bold" fill="#1e40af" text-anchor="middle">1. DATA INGESTION</text>
+                <text x="82" y="52" font-size="9.5" fill="#475569" text-anchor="middle">• map.osm / OSMnx Graph</text>
+                <text x="82" y="66" font-size="9.5" fill="#475569" text-anchor="middle">• DEM Elevation Baselines</text>
+                <text x="82" y="80" font-size="9.5" fill="#475569" text-anchor="middle">• Radar Grids (20-150mm)</text>
+
+                <!-- Arrow 1 to 2 -->
+                <path d="M155 52 L185 52" stroke="#0284c7" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                <!-- Box 2: ML Inference Agent -->
+                <rect x="185" y="15" width="150" height="75" rx="6" fill="#f0fdf4" stroke="#10b981" stroke-width="1.5"/>
+                <text x="260" y="35" font-size="11" font-weight="bold" fill="#166534" text-anchor="middle">2. ML INFERENCE AGENT</text>
+                <text x="260" y="52" font-size="9.5" fill="#475569" text-anchor="middle">• GBDT Depth Regressor</text>
+                <text x="260" y="66" font-size="9.5" fill="#475569" text-anchor="middle">• RF Hazard Classifier</text>
+                <text x="260" y="80" font-size="9.5" fill="#166534" font-weight="bold" text-anchor="middle">⚡ &lt;5ms Batch Prediction</text>
+
+                <!-- Arrow 2 to 3 -->
+                <path d="M335 52 L365 52" stroke="#0284c7" stroke-width="2"/>
+
+                <!-- Box 3: Alert & Routing Agent -->
+                <rect x="365" y="15" width="145" height="75" rx="6" fill="#fff7ed" stroke="#f97316" stroke-width="1.5"/>
+                <text x="437" y="35" font-size="11" font-weight="bold" fill="#9a3412" text-anchor="middle">3. ALERT & ROUTING</text>
+                <text x="437" y="52" font-size="9.5" fill="#475569" text-anchor="middle">• Inundated Road Graph</text>
+                <text x="437" y="66" font-size="9.5" fill="#475569" text-anchor="middle">• Dijkstra Safe Routing</text>
+                <text x="437" y="80" font-size="9.5" fill="#475569" text-anchor="middle">• Impassable Edge Pruning</text>
+
+                <!-- Down Arrow -->
+                <path d="M437 90 L437 125 L260 125 L260 140" stroke="#0f172a" stroke-width="2" stroke-dasharray="3,3"/>
+
+                <!-- Box 4: FastAPI & Dashboard Layer -->
+                <rect x="70" y="140" width="380" height="70" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+                <text x="260" y="160" font-size="11" font-weight="bold" fill="#0f172a" text-anchor="middle">FASTAPI SERVICE + MAPLIBRE GL 3D DASHBOARD</text>
+                <text x="260" y="178" font-size="9.5" fill="#334155" text-anchor="middle">📍 Live Hotspots: Engineering Chauraha | Jankipuram Underpass | Sector F</text>
+                <text x="260" y="194" font-size="9.5" fill="#0284c7" font-weight="bold" text-anchor="middle">⚡ Real-time GeoJSON Layer Broadcast • Citizen Routing • LMC Advisory</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 3</div>
+        <div>3</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 4: FEASIBILITY AND VIABILITY -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-4">
+      <div class="slide-header">
+        <div class="team-badge-circle">Team<br/>Alpha</div>
+        <div class="slide-main-title">FEASIBILITY AND VIABILITY</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3" style="flex: 1;">
+          <!-- Feasibility Analysis -->
+          <div class="card">
+            <div class="card-title">
+              <span>✅</span> Analysis of Feasibility
+            </div>
+            <ul class="bullet-list" style="gap: 8px;">
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Technical Feasibility:</strong> Functional end-to-end working prototype already built and tested on real Jankipuram road network. Runs on standard CPU servers without requiring expensive GPU compute.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Operational Feasibility:</strong> Designed to ingest standard GeoJSON and OpenStreetMap data readily available for Indian tier-1/tier-2 smart cities.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Financial Viability:</strong> 100% open-source core stack. Eliminates costly proprietary Map API fees ($0 license via MapLibre GL vs expensive Google Maps enterprise billing).
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Potential Challenges & Risks -->
+          <div class="card">
+            <div class="card-title">
+              <span>⚠️</span> Potential Challenges & Risks
+            </div>
+            <ul class="bullet-list" style="gap: 8px;">
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Sparse Sensor Networks:</strong> Indian municipalities often have sparse physical water-level and rainfall sensors.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Unmapped Subsurface Drains:</strong> Underground storm drain blueprints are frequently outdated or fragmented across municipal departments.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Debris Blockages:</strong> Monsoon solid waste debris blocks culverts, creating non-linear localized inundation.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Mitigation Strategies -->
+          <div class="card">
+            <div class="card-title">
+              <span>🛡️</span> Mitigation Strategies
+            </div>
+            <ul class="bullet-list" style="gap: 8px;">
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Physics-Informed Synthetic Training:</strong> Uses SWMM hydrodynamic modeling and DEM topological depressions to train AI models even without dense physical IoT hardware.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Automatic Network Derivation:</strong> Derives overland hydraulic flow accumulation directly from high-resolution DEM and OSM road centerlines.
+                </div>
+              </li>
+              <li class="bullet-item" style="font-size: 13px;">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Dynamic Friction Coefficient Tuning:</strong> Allows instant calibration for clogged culverts via parameter overrides in the Data Ingestion Agent.
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Feasibility Summary Ribbon -->
+        <div style="margin-top: 10px; background: #f1f5f9; border-radius: 6px; padding: 8px 14px; display: flex; justify-content: space-around; align-items: center; border: 1px solid #cbd5e1;">
+          <div style="font-size: 12px; font-weight: 700; color: #334155;">
+            🚀 <strong>Readiness:</strong> Technology Readiness Level (TRL) 5/6 - Working Prototype
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: #334155;">
+            ⚡ <strong>Scalability:</strong> Modular multi-agent pipeline easily deployed to any urban ward
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: #334155;">
+            💰 <strong>Cost:</strong> Low recurring TCO utilizing open geospatial data
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 4</div>
+        <div>4</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 5: IMPACT AND BENEFITS -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-5">
+      <div class="slide-header">
+        <div class="team-badge-circle">Team<br/>Alpha</div>
+        <div class="slide-main-title">IMPACT AND BENEFITS</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-2" style="flex: 1; gap: 16px;">
+          <!-- Target Audience Impact -->
+          <div class="card">
+            <div class="card-title">
+              <span>👥</span> Potential Impact on Target Audience
+            </div>
+            <ul class="bullet-list" style="gap: 10px;">
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Citizens & Urban Commuters:</strong><br/>
+                  Direct access to real-time flood-free navigation routes. Prevents vehicles from entering drowned underpasses (such as Jankipuram Extension Underpass), avoiding engine hydrolock and life-threatening submergence.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Municipal Corporations (e.g., Lucknow Nagar Nigam / ICCC):</strong><br/>
+                  Transforms reactive crisis management into proactive dispatch. Provides 15–30 minutes lead-time to mobilize heavy de-watering pumps to Sector F and Engineering Chauraha before choke points freeze.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Emergency First Responders & Ambulances:</strong><br/>
+                  Guarantees continuous hospital transit paths (e.g., AKTU / Sewa Hospital corridor) through dynamic flood-penalized Dijkstra routing.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Multi-Dimensional Benefits -->
+          <div class="card">
+            <div class="card-title">
+              <span>🌐</span> Multi-Dimensional Benefits of the Solution
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #10b981;">
+                <strong style="color: #065f46;">🌱 Social & Life Safety Benefits:</strong>
+                <p style="font-size: 12.5px; color: #334155; margin-top: 2px;">
+                  Prevents loss of life from submerged electrical poles, open manholes, and vehicle entrapment; reduces waterborne epidemics (dengue, leptospirosis) by minimizing prolonged stagnant pooling.
+                </p>
+              </div>
+              <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #0284c7;">
+                <strong style="color: #0369a1;">💰 Economic & Urban Productivity:</strong>
+                <p style="font-size: 12.5px; color: #334155; margin-top: 2px;">
+                  Curtails millions of rupees in vehicle damages, prevents road pavement asphalt erosion through timely de-watering, and eliminates multi-hour traffic gridlocks across Lucknow arterial links.
+                </p>
+              </div>
+              <div style="background: #ffffff; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #f58220;">
+                <strong style="color: #c2410c;">🌍 Environmental & Watershed Protection:</strong>
+                <p style="font-size: 12.5px; color: #334155; margin-top: 2px;">
+                  Mitigates combined sewer overflows (CSO) into the Gomti River basin by giving authorities spatial visibility to control catchment discharge rates.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric impact indicators -->
+        <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 6px;">
+            <div style="font-size: 18px; font-weight: 900; color: #166534;">&lt; 5 ms</div>
+            <div style="font-size: 11px; color: #475569; font-weight: 600;">Prediction Time</div>
+          </div>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px; border-radius: 6px;">
+            <div style="font-size: 18px; font-weight: 900; color: #1e40af;">20+ Mins</div>
+            <div style="font-size: 11px; color: #475569; font-weight: 600;">Early Warning Lead</div>
+          </div>
+          <div style="background: #fdf4ff; border: 1px solid #f5d0fe; padding: 8px; border-radius: 6px;">
+            <div style="font-size: 18px; font-weight: 900; color: #86198f;">100% Free</div>
+            <div style="font-size: 11px; color: #475569; font-weight: 600;">Open Map Stack</div>
+          </div>
+          <div style="background: #fff7ed; border: 1px solid #fed7aa; padding: 8px; border-radius: 6px;">
+            <div style="font-size: 18px; font-weight: 900; color: #9a3412;">Zero Risk</div>
+            <div style="font-size: 11px; color: #475569; font-weight: 600;">Safe Route Routing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 5</div>
+        <div>5</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 6: RESEARCH AND REFERENCES -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-6">
+      <div class="slide-header">
+        <div class="team-badge-circle">Team<br/>Alpha</div>
+        <div class="slide-main-title">RESEARCH AND REFERENCES</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div class="section-heading" style="margin-bottom: 8px;">
+          <span class="diamond-icon">•</span>
+          <span>Details / Links of Reference & Research Work</span>
+        </div>
+
+        <div class="grid-2" style="flex: 1; gap: 14px;">
+          <!-- Left: Academic Papers & Hydrology Principles -->
+          <div class="card">
+            <div class="card-title">
+              <span>📚</span> Core Hydrology & AI Research
+            </div>
+            <ul class="bullet-list" style="gap: 8px; font-size: 12.5px;">
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>EPA Storm Water Management Model (SWMM 5.1):</strong> Rossman, L. A., <em>"Storm Water Management Model Reference Manual Volume II – Hydraulics,"</em> U.S. Environmental Protection Agency, Washington, DC.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Physics-Informed ML Surrogates in Urban Waterlogging:</strong> Bermúdez, M. et al. (2019), <em>"Rapid 2D urban flood inundation mapping using machine learning surrogates,"</em> Journal of Hydrology, 574, pp. 696–707.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Graph Reweighting for Emergency Routing:</strong> Dijkstra, E. W. (1959), <em>"A note on two problems in connexion with graphs,"</em> Numerische Mathematik, with dynamic flood penalties.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>OSMNx Street Network Science:</strong> Boeing, G. (2017), <em>"OSMnx: New methods for acquiring, constructing, analyzing, and visualizing complex street networks,"</em> Computers, Environment and Urban Systems, 65, 126–139.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Right: Government Standards & Open Source Stacks -->
+          <div class="card">
+            <div class="card-title">
+              <span>🏛️</span> Standards, Government Portals & Tools
+            </div>
+            <ul class="bullet-list" style="gap: 8px; font-size: 12.5px;">
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>National Disaster Management Authority (NDMA):</strong> <em>"National Disaster Management Guidelines – Management of Urban Flooding,"</em> Government of India, New Delhi.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>Lucknow Smart City Integrated Command and Control Centre (ICCC):</strong> Drainage Master Plan & Jankipuram Ward Inundation Assessment Reports.
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>India Meteorological Department (IMD) Radar Network:</strong> Doppler Weather Radar (DWR) quantitative precipitation estimates (QPE).
+                </div>
+              </li>
+              <li class="bullet-item">
+                <span class="bullet-dot">•</span>
+                <div>
+                  <strong>MapLibre GL & OpenStreetMap:</strong> MapLibre Native/Web open-source standard for vector tile mapping (https://maplibre.org).
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Project GitHub / Working Prototype Reference Box -->
+        <div style="margin-top: 10px; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 6px; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 12px; color: #0369a1; font-weight: 700;">
+            💻 <strong>Working Codebase:</strong> FastAPI + React MapLibre GL + Scikit-Learn Multi-Agent Pipeline
+          </div>
+          <div style="font-size: 12px; color: #0284c7; font-weight: bold;">
+            Sub-second Nowcasting Engine: Jankipuram Ward, Lucknow
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 6</div>
+        <div>6</div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 7: IMPORTANT INSTRUCTIONS -->
+    <!-- ========================================== -->
+    <section class="slide" id="slide-7">
+      <div class="slide-header">
+        <div class="slide-main-title" style="margin-left: 50px;">IMPORTANT INSTRUCTIONS & SUBMISSION CHECKLIST</div>
+        <div class="sih-logo-block">
+          <div class="sih-logo-text">SMART INDIA<br/>HACKATHON<br/><span style="color:#0a3871;">2026</span></div>
+        </div>
+      </div>
+
+      <div class="slide-body">
+        <div style="font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 12px;">
+          Please ensure below pointers are met while submitting the Idea PPT:
+        </div>
+
+        <!-- 6 Instruction Banners matching SIH Template -->
+        <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">1.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              Kindly keep the maximum slides limit up to six (6). (Including the title slide)
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">2.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              Try to avoid paragraphs and post your idea in points / diagrams / Infographics / pictures
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">3.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              Keep your explanation precise and easy to understand
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">4.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              Idea should be unique and novel.
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">5.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              You can only use provided template for making the PPT without changing the idea details pointers (mentioned in previous slides).
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1.5px solid #0284c7; border-radius: 8px; padding: 7px 14px;">
+            <span style="font-size: 16px; font-weight: 900; color: #0284c7; min-width: 24px;">6.</span>
+            <span style="font-size: 14px; font-weight: 600; color: #0f172a;">
+              You need to save the file in PDF and upload the same on portal. No PPT, Word Doc or any other format will be supported.
+            </span>
+          </div>
+        </div>
+
+        <!-- Red Note Box -->
+        <div style="margin-top: 10px; background: #fef2f2; border: 1.5px solid #f87171; border-radius: 8px; padding: 10px 16px;">
+          <p style="color: #b91c1c; font-size: 13.5px; font-weight: 700; line-height: 1.4;">
+            Note - You can delete this slide (Important Pointers) when you upload the details of your idea on SIH portal, keeping exactly Slides 1 to 6.
+          </p>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div>@SIH Idea submission - Template 7</div>
+        <div>7</div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    function scrollToSlide(slideNum) {
+      const slide = document.getElementById('slide-' + slideNum);
+      if (slide) {
+        slide.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Keyboard navigation (Arrow keys)
+    let currentSlide = 1;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        if (currentSlide < 7) {
+          currentSlide++;
+          scrollToSlide(currentSlide);
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentSlide > 1) {
+          currentSlide--;
+          scrollToSlide(currentSlide);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

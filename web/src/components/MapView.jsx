@@ -145,22 +145,112 @@ export default function MapView({
         },
       });
 
-      // Click event for road segments & nodes
+      // Cursor pointer styling on hover
+      const setPointer = () => { map.getCanvas().style.cursor = 'pointer'; };
+      const resetPointer = () => { map.getCanvas().style.cursor = ''; };
+
+      map.on('mouseenter', 'flood-lines', setPointer);
+      map.on('mouseleave', 'flood-lines', resetPointer);
+      map.on('mouseenter', 'flood-nodes', setPointer);
+      map.on('mouseleave', 'flood-nodes', resetPointer);
+
+      // Click event for road segments (LineString)
       map.on('click', 'flood-lines', (e) => {
         if (!e.features || e.features.length === 0) return;
         const feat = e.features[0];
-        const depth = feat.properties.flood_depth_m || 0;
-        const risk = feat.properties.risk_level || 'NORMAL';
-        const length = feat.properties.length_m || 'N/A';
+        const depth = parseFloat(feat.properties.flood_depth_m) || 0;
+        const length = feat.properties.length_m ? `${parseFloat(feat.properties.length_m).toFixed(1)} m` : 'N/A';
+
+        // Accurately determine risk tier and colors matching the hydraulic model thresholds
+        let tierName = 'NORMAL DISCHARGE (SAFE)';
+        let tierColor = '#0ea5e9'; // Blue / Cyan
+        let badgeBg = 'rgba(14, 165, 233, 0.15)';
+        let advisory = 'Clear corridor • Normal storm drainage capacity';
+
+        if (depth >= 0.30 || feat.properties.status === 'CLOSED_IMPASSABLE') {
+          tierName = 'SUBMERGED (CLOSED)';
+          tierColor = '#ef4444'; // Red
+          badgeBg = 'rgba(239, 68, 68, 0.2)';
+          advisory = 'Hazardous depth (>30cm) • Route closed to traffic';
+        } else if (depth >= 0.12 || feat.properties.status === 'CAUTION_WATERLOGGED') {
+          tierName = 'WATERLOGGED (CAUTION)';
+          tierColor = '#f59e0b'; // Amber / Yellow
+          badgeBg = 'rgba(245, 158, 11, 0.2)';
+          advisory = 'Water ponding (12-30cm) • Drive with caution';
+        }
 
         new maplibregl.Popup({ closeButton: true, className: 'eoc-popup' })
           .setLngLat(e.lngLat)
           .setHTML(`
-            <div style="background:#111827; color:#f9fafb; padding:10px; border-radius:6px; font-family:sans-serif; font-size:12px;">
-              <strong style="color:#0ea5e9; text-transform:uppercase;">Road Drainage Segment</strong>
-              <div style="margin-top:4px;">Water Depth: <strong style="color:${depth >= 0.3 ? '#ef4444' : '#10b981'}">${depth} m</strong></div>
-              <div>Risk Tier: <span style="font-weight:600;">${risk}</span></div>
-              <div>Length: ${length} m</div>
+            <div style="background:#111827; color:#f9fafb; padding:12px; border-radius:8px; font-family:Inter,sans-serif; font-size:12px; min-width:210px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <span style="color:#94a3b8; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Road Segment</span>
+                <span style="font-size:10px; font-weight:700; color:${tierColor}; background:${badgeBg}; padding:2px 6px; border-radius:4px; border:1px solid ${tierColor}40;">
+                  ${tierName}
+                </span>
+              </div>
+              <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:baseline;">
+                <span style="color:#94a3b8;">Water Depth:</span>
+                <strong style="color:${tierColor}; font-size:14px; font-weight:700;">${depth.toFixed(3)} m</strong>
+              </div>
+              <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:baseline;">
+                <span style="color:#94a3b8;">Corridor Length:</span>
+                <span style="font-weight:600; color:#e2e8f0;">${length}</span>
+              </div>
+              <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; color:#cbd5e1; line-height:1.3;">
+                ${advisory}
+              </div>
+            </div>
+          `)
+          .addTo(map);
+      });
+
+      // Click event for drainage nodes / manholes (Point)
+      map.on('click', 'flood-nodes', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        const feat = e.features[0];
+        const depth = parseFloat(feat.properties.flood_depth_m) || 0;
+        const surcharge = parseFloat(feat.properties.surcharge_m3) || 0;
+        const nodeName = feat.properties.name || feat.properties.node_id || 'Drainage Node';
+        const elevation = feat.properties.elevation_m ? `${parseFloat(feat.properties.elevation_m).toFixed(1)} m` : 'N/A';
+
+        let tierName = 'SAFE (NORMAL)';
+        let tierColor = '#06b6d4'; // Cyan
+        let badgeBg = 'rgba(6, 182, 212, 0.15)';
+
+        if (depth >= 0.30 || feat.properties.severity_level === 'HIGH_RISK_ALERT') {
+          tierName = 'CRITICAL SURCHARGE';
+          tierColor = '#dc2626'; // Red
+          badgeBg = 'rgba(220, 38, 38, 0.2)';
+        } else if (depth >= 0.12 || feat.properties.severity_level === 'MODERATE_WARNING') {
+          tierName = 'MODERATE WARNING';
+          tierColor = '#d97706'; // Amber
+          badgeBg = 'rgba(217, 119, 6, 0.2)';
+        }
+
+        new maplibregl.Popup({ closeButton: true, className: 'eoc-popup' })
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div style="background:#111827; color:#f9fafb; padding:12px; border-radius:8px; font-family:Inter,sans-serif; font-size:12px; min-width:210px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <span style="color:#94a3b8; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Drainage Node</span>
+                <span style="font-size:10px; font-weight:700; color:${tierColor}; background:${badgeBg}; padding:2px 6px; border-radius:4px; border:1px solid ${tierColor}40;">
+                  ${tierName}
+                </span>
+              </div>
+              <div style="font-weight:600; color:#f1f5f9; margin-bottom:6px; font-size:13px;">${nodeName}</div>
+              <div style="margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span style="color:#94a3b8;">Ponding Depth:</span>
+                <strong style="color:${tierColor}; font-size:13px;">${depth.toFixed(3)} m</strong>
+              </div>
+              <div style="margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span style="color:#94a3b8;">Surcharge Volume:</span>
+                <span style="font-weight:600; color:#e2e8f0;">${surcharge.toFixed(1)} m³</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:#94a3b8;">Elevation:</span>
+                <span style="color:#e2e8f0;">${elevation}</span>
+              </div>
             </div>
           `)
           .addTo(map);
