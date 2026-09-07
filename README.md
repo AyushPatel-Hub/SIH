@@ -172,23 +172,3 @@ Open your browser at: **`http://localhost:8000`**
 
 ---
 
-## 🏆 Smart India Hackathon (SIH 2026) Presentation Guide
-
-### 1. The Hook (Slide 1-2)
-- Highlight Lucknow's monsoon waterlogging challenges in low-lying residential clusters like Jankipuram.
-- Show traditional 2D hydrodynamic simulation time vs. AI Nowcasting: **45 minutes ➔ 4.5 milliseconds**.
-
-### 2. Technological Novelty (Slide 3-4)
-- **Multi-Agent Decoupling:** Data ingestion, surrogate inference, and routing agents operate independently.
-- **Physics-Informed Surrogacy:** Uses SWMM hydrologic principles ($Q = C \cdot I \cdot A$) and Manning's pipe equation, accelerated via Gradient Boosted Decision Trees.
-- **MapLibre GL Integration:** 100% open-source, zero proprietary API cost, 3D extruded rendering of flood surcharges.
-
-### 3. Live Demo Walkthrough (Slide 5)
-1. Move the **Rainfall Intensity Slider** to `110 mm/hr` and click **Run ML Flood Nowcast**.
-2. Point out how **Sector F** and **Extension Underpass** immediately light up in **RED (>0.30m submergence)**.
-3. Click **Flood-Safe Evacuation Router** to demonstrate dynamic rerouting around submerged intersections in real time.
-
----
-
-## 📄 License
-Distributed under the MIT License. Built for Smart India Hackathon 2026.
