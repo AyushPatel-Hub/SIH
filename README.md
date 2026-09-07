@@ -153,6 +153,7 @@ python run_pipeline.py --nowcast --rain 90.0 --duration 2.0
 ```bash
 python run_pipeline.py --serve --port 8000
 ```
+run code **`python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload`**
 Open your browser at: **`http://localhost:8000`**
 
 ---
