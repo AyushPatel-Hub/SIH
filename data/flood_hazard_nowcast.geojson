@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "name": "Jankipuram_Flood_Hazard_Nowcast",
   "metadata": {
-    "rain_intensity_mm_hr": 0.6,
+    "rain_intensity_mm_hr": 4.3,
     "duration_hrs": 1.0,
     "system_status": "NORMAL_CONDITIONS"
   },
