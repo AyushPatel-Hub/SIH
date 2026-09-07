@@ -45,10 +45,10 @@ export default function Header({
           <button
             className={`mode-toggle-btn ${activeMode === 'live' ? 'active' : ''}`}
             onClick={() => setActiveMode('live')}
-            title="Auto-feed live rainfall telemetry directly to database"
+            title="Auto-feed Doppler Weather Radar telemetry directly to database"
           >
             <Radio size={13} className={activeMode === 'live' ? 'text-sky-400' : ''} />
-            Live Auto Feed (DB)
+            Doppler Feed (DB)
           </button>
           <button
             className={`mode-toggle-btn ${activeMode === 'sim' ? 'active' : ''}`}
@@ -60,7 +60,7 @@ export default function Header({
           </button>
         </div>
 
-        {/* Fetch Real-Time Weather Button */}
+        {/* Sync Doppler Radar Button */}
         <button
           className="btn-primary"
           style={{
@@ -70,16 +70,16 @@ export default function Header({
           }}
           onClick={onSyncLiveWeather}
           disabled={isSyncing}
-          title="Fetch real-time live weather telemetry from Open-Meteo for Jankipuram and run flood nowcast"
+          title="Fetch real-time & advance Doppler Weather Radar (DWR Lucknow) telemetry and run flood nowcast"
         >
           <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
-          <span>{isSyncing ? 'Fetching Live...' : 'Fetch Live Weather'}</span>
+          <span>{isSyncing ? 'Scanning Radar...' : 'Sync Doppler Radar'}</span>
         </button>
 
         {/* Status Pill */}
         <div className="status-pill live">
           <span className="live-beacon"></span>
-          <span>LIVE DB INGEST</span>
+          <span>DWR LKO INGEST</span>
         </div>
 
         {/* Digital Clock */}

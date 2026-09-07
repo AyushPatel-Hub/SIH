@@ -116,16 +116,17 @@ class FloodNowcastCoordinator:
             "is_auto_ingested": is_auto_ingested,
         }
 
-    def run_live_auto_cycle(self) -> Dict[str, Any]:
+    def run_live_auto_cycle(self, lead_time_hours: int = 0) -> Dict[str, Any]:
         """
-        Automated Live Ingestion Cycle:
-        1. Query live meteorological telemetry for Jankipuram from Open-Meteo.
+        Automated Doppler Radar Ingestion & Advance Nowcasting Cycle:
+        1. Query IMD Doppler Radar nowcasting for Jankipuram with selected lead time (0-4h).
         2. Feed reading directly into the database.
-        3. Trigger nowcast simulation with live rainfall rate.
-        4. Log results and return aggregated status.
+        3. Trigger nowcast simulation with advance/live rainfall rate.
+        4. Log results and return aggregated status with advance warnings.
         """
-        logger.info("Executing automated live weather ingestion cycle...")
-        weather = self.weather_service.fetch_live_rainfall()
+        lead_time_clamped = max(0, min(4, int(lead_time_hours)))
+        logger.info(f"Executing Doppler Radar ingestion cycle with lead time = +{lead_time_clamped}h...")
+        weather = self.weather_service.fetch_doppler_radar_nowcast(lead_time_hours=lead_time_clamped)
 
         # Insert reading into database
         reading_id = self.db.insert_rainfall_reading(
@@ -139,8 +140,6 @@ class FloodNowcastCoordinator:
         )
 
         rain_rate = weather["rain_rate_mm_hr"]
-        # If live rain is currently 0 mm/hr (e.g. non-rainy clear day),
-        # we still run nowcast at 0 or baseline to confirm clear, safe roads.
         nowcast_result = self.run_nowcast_cycle(
             rain_intensity_mm_hr=rain_rate,
             duration_hrs=1.0,
@@ -148,14 +147,36 @@ class FloodNowcastCoordinator:
             is_auto_ingested=True,
         )
 
+        # If this is an advance lead-time prediction, customize alerts with proactive lead time banner
+        alerts = list(nowcast_result.get("alerts", []))
+        if lead_time_clamped > 0 and rain_rate > 0:
+            dbz_val = weather.get("radar_reflectivity_dbz", 35.0)
+            advance_bulletin = {
+                "severity": "ORANGE_ADVISORY" if rain_rate < 25.0 else "RED_ALERT",
+                "headline": f"PROACTIVE ADVANCE WARNING: +{lead_time_clamped}h DOPPLER RADAR NOWCAST",
+                "description": (
+                    f"IMD Doppler Weather Radar (DWR Lucknow) detects an approaching convective cloud cell "
+                    f"with {dbz_val} dBZ reflectivity. Projected arrival in Jankipuram in {lead_time_clamped} hour(s) "
+                    f"with {rain_rate} mm/hr rain intensity. Advance pump deployment recommended."
+                ),
+                "affected_zones": ["Jankipuram Extension Underpass", "Sector F Drain Basin", "Kursi Road Corridor"],
+                "action_item": f"Municipal crews have ~{lead_time_clamped * 60} minutes proactive lead time to mobilize de-watering pumps and close flood-prone underpasses.",
+            }
+            alerts.insert(0, advance_bulletin)
+            nowcast_result["alerts"] = alerts
+
         return {
             **nowcast_result,
             "live_weather": weather,
             "rainfall_reading_id": reading_id,
+            "lead_time_hours": lead_time_clamped,
+            "lead_time_label": weather["lead_time_label"],
+            "radar_reflectivity_dbz": weather["radar_reflectivity_dbz"],
         }
 
 
 if __name__ == "__main__":
     coordinator = FloodNowcastCoordinator()
-    result = coordinator.run_live_auto_cycle()
-    print(f"[OK] Live Auto Cycle completed in {result['total_latency_ms']}ms | Rain: {result['live_weather']['rain_rate_mm_hr']} mm/hr | Status: {result['system_status']}")
+    result = coordinator.run_live_auto_cycle(lead_time_hours=3)
+    print(f"[OK] Doppler Radar Auto Cycle (+{result['lead_time_hours']}h) completed in {result['total_latency_ms']}ms | Rain: {result['live_weather']['rain_rate_mm_hr']} mm/hr | Status: {result['system_status']}")
+

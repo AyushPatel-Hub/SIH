@@ -157,15 +157,14 @@ def get_health() -> Dict[str, Any]:
 # ==========================================
 
 @app.get("/api/rainfall/live")
-def get_live_rainfall() -> Dict[str, Any]:
+def get_live_rainfall(lead_time_hours: int = Query(0, ge=0, le=4)) -> Dict[str, Any]:
     """
-    Returns latest live rainfall observation from SQLite database,
-    along with data source information and last synchronization timestamp.
+    Returns latest Doppler Weather Radar observation or advance nowcast from SQLite database,
+    along with radar reflectivity (dBZ) and 4-hour forecast curve.
     """
+    telemetry = coordinator.weather_service.fetch_doppler_radar_nowcast(lead_time_hours=lead_time_hours)
     latest_reading = coordinator.db.get_latest_rainfall()
     if not latest_reading:
-        # If DB is fresh, query weather service immediately
-        telemetry = coordinator.weather_service.fetch_live_rainfall()
         row_id = coordinator.db.insert_rainfall_reading(
             source=telemetry["source"],
             rain_rate_mm_hr=telemetry["rain_rate_mm_hr"],
@@ -177,30 +176,33 @@ def get_live_rainfall() -> Dict[str, Any]:
         )
         latest_reading = coordinator.db.get_latest_rainfall()
 
-    # Parse raw payload to provide enriched weather parameters
-    weather_info = {}
-    if latest_reading and latest_reading.get("raw_payload"):
-        try:
-            raw = json.loads(latest_reading["raw_payload"]) if isinstance(latest_reading["raw_payload"], str) else latest_reading["raw_payload"]
-            weather_info = {
-                "temperature_c": raw.get("temperature_2m", 30.0),
-                "feels_like_c": raw.get("apparent_temperature", 33.0),
-                "humidity": raw.get("relative_humidity_2m", 75),
-                "surface_pressure_hpa": raw.get("surface_pressure", 1005.0),
-                "wind_speed_kmh": raw.get("wind_speed_10m", 10.0),
-                "weather_desc": latest_reading.get("weather_desc", "Normal"),
-                "weather_code": latest_reading.get("weather_code", 0),
-                "rain_rate_mm_hr": latest_reading.get("rain_rate_mm_hr", 0.0),
-                "rain_accumulated_1h_mm": latest_reading.get("rain_accumulated_1h_mm", 0.0),
-                "station_name": latest_reading.get("station_name", "Jankipuram, Lucknow"),
-                "timestamp": latest_reading.get("timestamp"),
-            }
-        except Exception:
-            pass
+    weather_info = {
+        "temperature_c": telemetry.get("temperature_c", 30.0),
+        "feels_like_c": telemetry.get("feels_like_c", 33.0),
+        "humidity": telemetry.get("humidity", 78),
+        "surface_pressure_hpa": telemetry.get("surface_pressure_hpa", 1006.0),
+        "wind_speed_kmh": telemetry.get("wind_speed_kmh", 12.0),
+        "weather_desc": telemetry.get("weather_desc", "Normal"),
+        "weather_code": telemetry.get("weather_code", 0),
+        "rain_rate_mm_hr": telemetry.get("rain_rate_mm_hr", 0.0),
+        "rain_accumulated_1h_mm": telemetry.get("rain_accumulated_1h_mm", 0.0),
+        "station_name": telemetry.get("station_name", "IMD Doppler Radar Lucknow (DWR)"),
+        "source": telemetry.get("source", "IMD Doppler Weather Radar"),
+        "radar_reflectivity_dbz": telemetry.get("radar_reflectivity_dbz", 10.0),
+        "reflectivity_category": telemetry.get("reflectivity_category", "CLEAR_AIR"),
+        "reflectivity_label": telemetry.get("reflectivity_label", "Clear Air"),
+        "reflectivity_color": telemetry.get("reflectivity_color", "#10b981"),
+        "storm_cell_velocity_kmh": telemetry.get("storm_cell_velocity_kmh", 15.0),
+        "lead_time_hours": telemetry.get("lead_time_hours", lead_time_hours),
+        "lead_time_label": telemetry.get("lead_time_label", "Live Scan (T+0)"),
+        "timestamp": telemetry.get("timestamp"),
+        "forecast_curve": telemetry.get("forecast_curve", []),
+    }
 
     return {
         "latest_reading": latest_reading,
         "weather_info": weather_info,
+        "forecast_curve": telemetry.get("forecast_curve", []),
         "last_nowcast_state": latest_state.get("last_nowcast"),
         "last_run_timestamp": latest_state.get("last_run_timestamp"),
         "auto_ingest_active": latest_state["auto_ingest_active"],
@@ -208,40 +210,39 @@ def get_live_rainfall() -> Dict[str, Any]:
 
 
 @app.get("/api/weather/live")
-def get_live_weather() -> Dict[str, Any]:
+def get_live_weather(lead_time_hours: int = Query(0, ge=0, le=4)) -> Dict[str, Any]:
     """
-    Directly queries Open-Meteo API for real-time live meteorological telemetry
-    at Jankipuram, Lucknow (UP, India).
+    Directly queries IMD Doppler Radar & numerical nowcasting for real-time
+    or advance multi-hour forecast at Jankipuram, Lucknow.
     """
     try:
-        telemetry = coordinator.weather_service.fetch_live_rainfall()
+        telemetry = coordinator.weather_service.fetch_doppler_radar_nowcast(lead_time_hours=lead_time_hours)
         return {
             "status": "success",
             "weather": telemetry,
             "timestamp": time.time(),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Live weather query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Live radar query failed: {str(e)}")
 
 
 @app.post("/api/weather/fetch-live")
-def fetch_live_weather_and_sync() -> Dict[str, Any]:
+def fetch_live_weather_and_sync(lead_time_hours: int = Query(0, ge=0, le=4)) -> Dict[str, Any]:
     """
-    Fetch real-time live weather data from Open-Meteo,
-    save to SQLite database, and execute immediate ML flood nowcast.
+    Fetch Doppler Radar advance nowcast, save to database, and execute immediate ML flood nowcast.
     """
     try:
-        res = coordinator.run_live_auto_cycle()
+        res = coordinator.run_live_auto_cycle(lead_time_hours=lead_time_hours)
         latest_state["last_nowcast"] = res
         latest_state["last_run_timestamp"] = time.time()
         return {
             "status": "success",
-            "message": "Real-time live weather data fetched and nowcast refreshed.",
+            "message": f"Doppler Radar nowcast (+{lead_time_hours}h) ingested and simulation refreshed.",
             "weather": res.get("live_weather"),
             "data": res,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Live weather fetch and sync failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Radar fetch and sync failed: {str(e)}")
 
 
 @app.get("/api/rainfall/history")
@@ -252,18 +253,18 @@ def get_rainfall_history(limit: int = Query(50, ge=5, le=200)) -> Dict[str, Any]
 
 
 @app.post("/api/rainfall/sync-now")
-def sync_live_weather_now() -> Dict[str, Any]:
+def sync_live_weather_now(lead_time_hours: int = Query(0, ge=0, le=4)) -> Dict[str, Any]:
     """
-    Explicitly forces a live fetch from Open-Meteo, feeds reading into SQLite,
-    and runs a fresh ML nowcast cycle immediately.
+    Explicitly forces a Doppler radar fetch, feeds reading into SQLite,
+    and runs a fresh ML nowcast cycle immediately for the selected horizon.
     """
     try:
-        res = coordinator.run_live_auto_cycle()
+        res = coordinator.run_live_auto_cycle(lead_time_hours=lead_time_hours)
         latest_state["last_nowcast"] = res
         latest_state["last_run_timestamp"] = time.time()
         return {
             "status": "success",
-            "message": "Live weather telemetry ingested into database and nowcast refreshed.",
+            "message": f"Doppler radar (+{lead_time_hours}h) telemetry ingested into database and nowcast refreshed.",
             "weather": res.get("live_weather"),
             "data": res,
         }
