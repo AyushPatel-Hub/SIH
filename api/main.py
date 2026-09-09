@@ -427,9 +427,15 @@ def compute_safe_route(req: SafeRouteRequest) -> Dict[str, Any]:
         if req.rain_intensity_mm_hr is not None:
             nc = coordinator.inference_agent.predict_nowcast(rain_intensity_mm_hr=req.rain_intensity_mm_hr)
         else:
-            nc = latest_state.get("last_nowcast")
-            if nc and "nowcast" in nc:
-                nc = nc["nowcast"]
+            last_nc = latest_state.get("last_nowcast")
+            if last_nc and "nowcast" in last_nc and isinstance(last_nc["nowcast"], dict):
+                nc = last_nc["nowcast"]
+            elif last_nc and "node_predictions" in last_nc:
+                nc = last_nc
+            else:
+                current_reading = coordinator.db.get_latest_rainfall()
+                rain_val = current_reading.get("rain_rate_mm_hr", 0.0) if current_reading else 0.0
+                nc = coordinator.inference_agent.predict_nowcast(rain_intensity_mm_hr=rain_val)
 
         route_res = coordinator.alert_agent.compute_safe_route(
             origin_lat=req.origin_lat,

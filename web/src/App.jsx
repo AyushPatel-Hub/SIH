@@ -220,7 +220,10 @@ export default function App() {
       const res = await fetch('/safe_route', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(coords),
+        body: JSON.stringify({
+          ...coords,
+          rain_intensity_mm_hr: telemetry.rainRate,
+        }),
       });
       if (res.ok) {
         const data = await res.json();

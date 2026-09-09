@@ -222,11 +222,13 @@ class AlertAndRoutingAgent:
                 max_d = max(d_u, d_v)
                 length = routing_graph[u][v].get("length_m", 100.0)
                 
+                routing_graph[u][v]["flood_depth_m"] = max_d
                 if max_d >= 0.30:
-                    # Impassable
-                    routing_graph[u][v]["weight"] = 1e8
+                    # Heavily penalize submerged roads proportionally to depth cubed:
+                    # Guarantees Dijkstra diverts to dry bypasses first; if surrounded, seeks the shallowest path.
+                    routing_graph[u][v]["weight"] = length * (10000.0 * (1.0 + (max_d ** 3) * 5.0))
                 elif max_d >= 0.12:
-                    routing_graph[u][v]["weight"] = length * (1.0 + (max_d * 20.0))
+                    routing_graph[u][v]["weight"] = length * (1.0 + (max_d * 25.0))
                 else:
                     routing_graph[u][v]["weight"] = length
 
@@ -246,15 +248,15 @@ class AlertAndRoutingAgent:
                 
                 if i > 0:
                     prev_n = path_nodes[i - 1]
-                    seg_len = self.base_graph[prev_n][n].get("length_m", 100.0) if self.base_graph.has_edge(prev_n, n) else 100.0
+                    seg_len = routing_graph[prev_n][n].get("length_m", 100.0) if routing_graph.has_edge(prev_n, n) else 100.0
                     total_distance_m += seg_len
-                    seg_depth = self.base_graph[prev_n][n].get("flood_depth_m", 0.0) if self.base_graph.has_edge(prev_n, n) else 0.0
+                    seg_depth = routing_graph[prev_n][n].get("flood_depth_m", 0.0) if routing_graph.has_edge(prev_n, n) else 0.0
                     max_route_flood_depth_m = max(max_route_flood_depth_m, seg_depth)
 
             route_status = (
                 "SAFE_CLEAR" if max_route_flood_depth_m < 0.10
-                else "PASSABLE_WITH_CAUTION" if max_route_flood_depth_m < 0.25
-                else "FLOOD_RISK_DIVERTED"
+                else "PASSABLE_WITH_CAUTION" if max_route_flood_depth_m < 0.30
+                else "CRITICAL_HAZARD_SUBMERGED"
             )
 
             route_geojson = {

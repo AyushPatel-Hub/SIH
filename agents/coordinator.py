@@ -114,6 +114,7 @@ class FloodNowcastCoordinator:
             "geojson_file": alert_pack["geojson_file"],
             "hotspots": HOTSPOTS,
             "is_auto_ingested": is_auto_ingested,
+            "nowcast": alert_pack["nowcast"],
         }
 
     def run_live_auto_cycle(self, lead_time_hours: int = 0) -> Dict[str, Any]:
